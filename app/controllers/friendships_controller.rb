@@ -17,26 +17,37 @@ class FriendshipsController < ApplicationController
   # GET /friendships/1/edit
   def edit; end
 
-  # def self.friends(user_id, friend_id)
-  #   @user_id = user_id
-  #   @friend_id = friend_id
-  #   @friends = Friendship.they_are_friends(user_id: @user_id, friend_id: @friend_id).first
-  #   # friends.confirmed
-  # end
+  def check_reverse_pair(user, friend)
+    Friendship.where(user_id: user, friend_id: friend)
+  end
+
+  def accept_or_reject_friend_request
+    friend_status = Friendship.where(user_id: params[:user], friend_id: params[:friend])
+    friend_status.update(confirmed: params[:status])
+    if params[:status] == 'accept'
+      redirect_back(fallback_location: users_path, notice: 'Friend request Accepted')
+    else
+      redirect_back(fallback_location: users_path, notice: 'Friend request Rejected')
+    end
+  end
 
   # POST /friendships or /friendships.json
   def create
     @sender = User.find(params[:user])
     @reciever = User.find(params[:friend])
 
-    @friend_request = @sender.friendships.build(user: @sender, friend: @reciever, confirmed: 'Unconfirmed')
+    reverse_pair = check_reverse_pair(@reciever, @sender)
+    if reverse_pair.empty?
+      @friend_request = @sender.friendships.build(user: @sender, friend: @reciever, confirmed: 'Unconfirmed')
 
-    if @friend_request.save
-      redirect_to users_path, notice: 'Friend request sent successfully'
+      if @friend_request.save
+        redirect_to users_path, notice: 'Friend request sent successfully'
+      else
+        redirect_to users_path, notice: 'A pending friend request exist'
+      end
     else
-      redirect_to users_path, notice: 'A pending friend request exist'
+      redirect_to users_path, notice: 'Friendship Exists'
     end
-    # end
   end
 
   # PATCH/PUT /friendships/1 or /friendships/1.json
