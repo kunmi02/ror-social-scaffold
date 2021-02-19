@@ -13,9 +13,8 @@ module UsersHelper
     end
   end
 
-  # def no_request?(user)
-  #   @user = user
-  #   !request_sent? && !request_received? && user != current_user
-  #   # byebug
-  # end
+  def check_friendship_status(user, friend)
+    user = Friendship.where(user_id: user, friend_id: friend)
+    status[0] = user.pluck(:confirmed)
+  end
 end
